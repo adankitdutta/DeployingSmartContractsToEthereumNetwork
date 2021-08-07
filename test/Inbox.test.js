@@ -6,49 +6,30 @@ const {interface, bytecode} =require('../compile.js');
 
 let accounts;
 let inbox;
+const initialString='Hi there!';
 beforeEach(async ()=>{
     // Get a list of all accounts
     accounts = await web3.eth.getAccounts();
 
     // Use one of those accounts to deploy the contract
     inbox = await new web3.eth.Contract(JSON.parse(interface))
-        .deploy({data:bytecode, arguments:['Hi there!']})
+        .deploy({data:bytecode, arguments:[initialString]})
         .send({from:accounts[0], gas:'1000000'})
 });
 
 describe('Inbox', ()=>{
     it('deploys a contract', ()=>{
-        console.log(inbox);
-    });
-});
-
-
-
-/* Mocha Testing simple example
-
-class Car{
-    park(){
-        return 'stopped';
-    }
-
-    drive(){
-        return 'vroom';
-    }
-}
-
-let car;
-beforeEach(()=>{
-    car=new Car();
-});
-
-describe('Car', ()=>{
-    it('can park',()=>{
-        assert.strictEqual(car.park(), 'stopped');
+        assert.ok(inbox.options.address);
     });
 
-    it('can drive',()=>{
-        assert.strictEqual(car.drive(),'vroom');
+    it('has a default message',async ()=>{
+        const message=await inbox.methods.message().call();
+        assert.strictEqual(message,initialString);
+    });
+
+    it('can change the message',async ()=>{
+        await inbox.methods.setMessage('bye').send({from: accounts[0]});
+        const message=await inbox.methods.message().call();
+        assert.strictEqual(message,'bye');
     });
 });
-
- */
